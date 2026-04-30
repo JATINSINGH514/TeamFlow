@@ -3,15 +3,22 @@
 ## Project Overview
 TeamFlow is a full-stack web application designed for managing projects, team members, and tasks with role-based access control (Admin/Member).
 
+## Submission Information
+- **Live URL**: [Replace with your Railway URL after deployment]
+- **GitHub Repo**: https://github.com/JATINSINGH514/TeamFlow
+
 ## Tech Stack
-- **Frontend**: React.js (Vite), Tailwind CSS, React Router DOM
-- **Backend**: Node.js, Express.js, MongoDB (Mongoose)
+- **Frontend**: React.js (Vite), Tailwind CSS, React Router DOM, Chart.js
+- **Backend**: Node.js, Express.js, MongoDB Atlas (Mongoose)
 - **Authentication**: JWT & bcrypt
 
-## Prerequisites
-Before running this project, ensure you have the following installed on your machine:
-- [Node.js](https://nodejs.org/) (Version 16 or higher)
-- [MongoDB](https://www.mongodb.com/try/download/community) (Running locally or an Atlas URI)
+## Deployment Instructions (Railway)
+This project is configured as a Monorepo for zero-config Railway deployment.
+1. Create an account on [Railway.app](https://railway.app/).
+2. Click **New Project** -> **Deploy from GitHub repo**.
+3. Select this repository (`JATINSINGH514/TeamFlow`).
+4. Railway will automatically detect the root `package.json`, build the frontend, and start the backend serving the static files!
+5. *Optional*: Add the `MONGO_URI` and `JWT_SECRET` variables in the Railway "Variables" tab.
 
 ## Setup Instructions
 

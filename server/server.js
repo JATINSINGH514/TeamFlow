@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/db.js');
 
 const authRoutes = require('./routes/authRoutes.js');
@@ -22,10 +23,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Base route
-app.get('/', (req, res) => {
-  res.send('TeamFlow API is running...');
-});
+// Serve frontend
+const __dirname_resolved = path.resolve();
+app.use(express.static(path.join(__dirname_resolved, '../client/dist')));
+
+app.get('*', (req, res) =>
+  res.sendFile(path.resolve(__dirname_resolved, '..', 'client', 'dist', 'index.html'))
+);
 
 const PORT = process.env.PORT || 5000;
 
