@@ -1,24 +1,37 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getProjectTasks, createTask, updateTaskStatus, addMemberToProject, getAllUsers, assignTask } from '../services/api';
+import { getProjectTasks, createTask, updateTaskStatus, addMemberToProject, removeMemberFromProject, getAllUsers, assignTask, getProjects } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const ProjectDetails = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
+  const [project, setProject] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showMemberModal, setShowMemberModal] = useState(false);
+  const [showManageMembersModal, setShowManageMembersModal] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'Medium', deadline: '', assignedTo: '' });
   const [selectedMember, setSelectedMember] = useState('');
 
   useEffect(() => {
     fetchTasks();
+    fetchProjectDetails();
     if (user?.role === 'Admin') {
       fetchAllUsers();
     }
   }, [id, user]);
+
+  const fetchProjectDetails = async () => {
+    try {
+      const { data } = await getProjects();
+      const currentProject = data.find(p => p._id === id);
+      setProject(currentProject);
+    } catch (err) {
+      console.error('Failed to fetch project details', err);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -74,9 +87,22 @@ const ProjectDetails = () => {
       alert('Member added successfully!');
       setShowMemberModal(false);
       setSelectedMember('');
+      fetchProjectDetails();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to add member');
       console.error('Failed to add member', err);
+    }
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    if (!window.confirm('Are you sure you want to remove this member?')) return;
+    try {
+      await removeMemberFromProject({ projectId: id, memberId });
+      alert('Member removed successfully!');
+      fetchProjectDetails();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to remove member');
+      console.error('Failed to remove member', err);
     }
   };
 
@@ -88,9 +114,15 @@ const ProjectDetails = () => {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <h1 className="text-3xl font-bold text-gray-800">Project Workspace</h1>
+        <div>
+           <h1 className="text-3xl font-bold text-gray-800">{project ? project.title : 'Project Workspace'}</h1>
+           {project && <p className="text-gray-500 mt-1">{project.description}</p>}
+        </div>
         {user?.role === 'Admin' && (
           <div className="flex gap-4">
+            <button onClick={() => setShowManageMembersModal(true)} className="btn-secondary">
+              Manage Members
+            </button>
             <button onClick={() => setShowMemberModal(true)} className="btn-secondary">
               + Add Member
             </button>
@@ -210,6 +242,39 @@ const ProjectDetails = () => {
                 <button type="submit" className="btn-primary">Add Member</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Members Modal */}
+      {showManageMembersModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">Manage Members</h2>
+            <div className="space-y-3 mb-6">
+              {project?.members?.map(member => (
+                <div key={member._id} className="flex justify-between items-center bg-gray-50 p-3 rounded border">
+                  <div>
+                    <p className="font-semibold">{member.name}</p>
+                    <p className="text-xs text-gray-500">{member.email}</p>
+                  </div>
+                  {project.admin._id !== member._id && (
+                    <button 
+                      onClick={() => handleRemoveMember(member._id)}
+                      className="text-red-500 hover:bg-red-50 px-3 py-1 rounded text-sm font-medium transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {project.admin._id === member._id && (
+                    <span className="text-xs bg-brand-100 text-brand-800 px-2 py-1 rounded font-bold">Admin</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <button onClick={() => setShowManageMembersModal(false)} className="btn-secondary">Close</button>
+            </div>
           </div>
         </div>
       )}

@@ -128,13 +128,27 @@ const Dashboard = () => {
 
         <div className="card">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Task Overview</h2>
-          <div className="w-full max-w-[250px] mx-auto">
+          <div className="w-full max-w-[250px] mx-auto mb-8">
              {analytics?.totalTasks > 0 ? (
                 <Doughnut data={chartData} options={{ maintainAspectRatio: true }} />
              ) : (
                 <p className="text-center text-gray-400 mt-10">No tasks to display.</p>
              )}
           </div>
+          
+          <h2 className="text-lg font-bold text-gray-800 mb-4 border-t pt-6">Tasks Per User</h2>
+          {analytics?.tasksPerUser?.length > 0 ? (
+            <div className="space-y-3">
+              {analytics.tasksPerUser.map((u, idx) => (
+                <div key={idx} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                  <span className="font-medium text-gray-700">{u.name}</span>
+                  <span className="bg-brand-100 text-brand-800 py-1 px-3 rounded-full text-xs font-semibold">{u.count} Tasks</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-400 text-sm">No assignments yet.</p>
+          )}
         </div>
       </div>
 

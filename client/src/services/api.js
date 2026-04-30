@@ -25,6 +25,7 @@ export const getProjects = () => api.get('/projects');
 export const createProject = (data) => api.post('/projects', data);
 export const deleteProject = (id) => api.delete(`/projects/${id}`);
 export const addMemberToProject = (data) => api.put('/projects/add-member', data);
+export const removeMemberFromProject = (data) => api.put('/projects/remove-member', data);
 export const getProjectAnalytics = () => api.get('/projects/analytics');
 
 // Tasks

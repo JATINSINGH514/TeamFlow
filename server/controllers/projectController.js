@@ -83,15 +83,54 @@ const addMember = async (req, res) => {
   }
 };
 
+const removeMember = async (req, res) => {
+  try {
+    const { projectId, memberId } = req.body;
+
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (project.admin.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
+      return res.status(403).json({ message: 'Not authorized to remove members' });
+    }
+
+    if (project.admin.toString() === memberId.toString()) {
+      return res.status(400).json({ message: 'Cannot remove the project admin' });
+    }
+
+    project.members = project.members.filter(id => id.toString() !== memberId.toString());
+    await project.save();
+
+    await User.findByIdAndUpdate(memberId, {
+      $pull: { projects: project._id },
+    });
+
+    res.json(project);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getProjectAnalytics = async (req, res) => {
   try {
-    const projects = await Project.find({ members: req.user._id }).populate('tasks');
+    const projects = await Project.find({ members: req.user._id })
+      .populate({
+        path: 'tasks',
+        populate: {
+          path: 'assignedTo',
+          select: 'name email'
+        }
+      });
     
     let totalTasks = 0;
     let completedTasks = 0;
     let pendingTasks = 0;
     let inProgressTasks = 0;
     let overdueTasks = 0;
+    const tasksPerUserMap = {};
     
     const now = new Date();
 
@@ -104,8 +143,18 @@ const getProjectAnalytics = async (req, res) => {
         if (task.deadline && new Date(task.deadline) < now && task.status !== 'Done') {
           overdueTasks++;
         }
+        
+        if (task.assignedTo) {
+          const userName = task.assignedTo.name;
+          tasksPerUserMap[userName] = (tasksPerUserMap[userName] || 0) + 1;
+        }
       });
     });
+    
+    const tasksPerUser = Object.keys(tasksPerUserMap).map(name => ({
+      name,
+      count: tasksPerUserMap[name]
+    }));
 
     res.json({
       totalProjects: projects.length,
@@ -113,11 +162,12 @@ const getProjectAnalytics = async (req, res) => {
       completedTasks,
       pendingTasks,
       inProgressTasks,
-      overdueTasks
+      overdueTasks,
+      tasksPerUser
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = { createProject, getUserProjects, deleteProject, addMember, getProjectAnalytics };
+module.exports = { createProject, getUserProjects, deleteProject, addMember, removeMember, getProjectAnalytics };

@@ -62,6 +62,10 @@ const updateTaskStatus = async (req, res) => {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    if (req.user.role === 'Member' && task.assignedTo?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update this task' });
+    }
+
     task.status = status;
     await task.save();
 
@@ -73,7 +77,11 @@ const updateTaskStatus = async (req, res) => {
 
 const getProjectTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ project: req.params.projectId }).populate('assignedTo', 'name email').populate('createdBy', 'name email');
+    const filter = { project: req.params.projectId };
+    if (req.user.role === 'Member') {
+      filter.assignedTo = req.user._id;
+    }
+    const tasks = await Task.find(filter).populate('assignedTo', 'name email').populate('createdBy', 'name email');
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ message: error.message });
